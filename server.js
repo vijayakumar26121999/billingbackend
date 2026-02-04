@@ -12,6 +12,11 @@ const os = require('os');
 const pairing = require('./pairing');
 
 const LICENSE_SECRET = "antigravity_license_secret_key_2026";
+// // import path from "path";
+// import { fileURLToPath } from "url";
+
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
 
 const app = express();
 // PORT is already defined later or I can move it here, but avoiding redeclaration.
@@ -47,8 +52,19 @@ app.get('/api/health', (req, res) => {
 // Master DB for Global Configuration
 // When running in Electron, use DATA_DIR env var if provided; otherwise fallback to logic
 const isElectron = process.env.ELECTRON_RUN_AS_NODE === '1';
-const dataDir = process.env.DATA_DIR || (isElectron ? path.join(__dirname) : process.cwd());
-const dbDataPath = path.join(dataDir, "data");
+
+const dataDir =
+  process.env.DATA_DIR ||
+  (isElectron ? path.join(__dirname, "data") : path.join(process.cwd(), "data"));
+
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
+
+const dbDataPath = dataDir;
+if (!fs.existsSync(dbDataPath)) {
+  fs.mkdirSync(dbDataPath, { recursive: true });
+}
 
 console.log(`Data directory: ${dataDir}`);
 console.log(`Database path: ${dbDataPath}`);
@@ -1269,10 +1285,8 @@ function getLocalIPs() {
   return ips.length > 0 ? ips : [{ name: 'loopback', address: 'localhost' }];
 }
 
-const localIPs = getLocalIPs();
-const localIP = localIPs[0].address; // Fallback for single-IP usage
-console.log(`Detected Local IPs:`, localIPs.map(i => i.address).join(', '));
-
+const isProd = process.env.NODE_ENV === "production";
+const localIP = isProd ? "0.0.0.0" : getLocalIPs()[0].address;
 // Create Server
 const httpServer = http.createServer(app);
 
@@ -1340,6 +1354,11 @@ app.get('/api/health', (req, res) => {
 // Network IP Endpoint
 app.get('/api/network-ip', (req, res) => {
   res.json({ ips: localIPs, primaryIp: localIP });
+});
+app.use(express.static(path.join(__dirname, "dist")));
+
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist/index.html"));
 });
 
 // Start Server
