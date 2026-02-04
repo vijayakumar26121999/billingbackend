@@ -67,6 +67,7 @@ if (!fs.existsSync(dbDataPath)) {
 }
 
 console.log(`Data directory: ${dataDir}`);
+
 console.log(`Database path: ${dbDataPath}`);
 
 const masterDb = new sqlite3.Database(path.join(dbDataPath, "master.db"));
