@@ -1269,7 +1269,7 @@ app.get("/api/reports/stock-history", (req, res) => {
 
 
 // Backend Configuration
-const PORT = process.env.PORT || 4000;
+const PORT = process.env.PORT || 4001;
 
 // Helper to get local IPs
 function getLocalIPs() {
